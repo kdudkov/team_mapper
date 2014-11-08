@@ -13,20 +13,23 @@ app.controller('MainCtrl',
             $('#add_point_dialog').modal('show');
         };
 
-        function getData() {
+        $scope.getData = function () {
+            $scope.loading = true;
             $log.info('start fetching data from ' + url);
             $http.get(url)
                 .success(function (data) {
                     $log.info('got data from server');
                     $scope.error = null;
                     processServerData(data);
-                    $timeout(getData, 10000);
+                    $timeout($scope.getData, 10000);
+                    $scope.loading = false;
                 })
                 .error(function (data, status) {
                     $log.error('error getting data, status ' + status);
                     $scope.error = 'error getting data';
                     $scope.$digest();
-                    $timeout(getData, 60000);
+                    $timeout($scope.getData, 10000);
+                    $scope.loading = false;
                 });
         }
 
@@ -98,6 +101,7 @@ app.controller('MainCtrl',
             }
         };
 
+        $scope.loading = false;
         $scope.use_degrees = false;
         $scope.use_degrees_text = $scope.use_degrees ? 'deg' : 'dms';
 
@@ -105,9 +109,9 @@ app.controller('MainCtrl',
         $scope.units = [];
 
         if (ya_ready) {
-            getData();
+            $scope.getData();
         } else {
-            map_ready_callback = getData;
+            map_ready_callback = $scope.getData;
         }
     });
 
