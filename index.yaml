@@ -1,0 +1,7 @@
+indexes:
+
+- kind: Position
+  ancestor: yes
+  properties:
+  - name: time
+    direction: desc

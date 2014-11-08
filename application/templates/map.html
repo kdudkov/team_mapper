@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <link rel="stylesheet" href="http://yandex.st/bootstrap/3.1.1/css/bootstrap.min.css">
+    <script src="http://yandex.st/jquery/2.1.1/jquery.min.js"></script>
+    <script src="http://yandex.st/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+    <script src="https://api-maps.yandex.ru/2.1/?load=package.standard,package.route,package.traffic&lang=ru-RU"
+            type="text/javascript"></script>
+
+    <script src="http://yandex.st/angularjs/1.2.23/angular.min.js"></script>
+    <script src="/static/js/ymaps.js"></script>
+    <script src="/static/js/app.js"></script>
+    <style>
+        body, html {
+            height: 100%
+        }
+
+        .info {
+            font-size: 12px;;
+        }
+
+        .tab-pane {
+            padding-top: 15px;
+        }
+
+        .main-info {
+            margin-top: 10px;
+            padding-top: 10px;
+            padding-bottom: 10px;
+        }
+    </style>
+</head>
+
+<body ng-app="app">
+<div class="container-fluid" ng-controller="MainCtrl">
+    <div class="row">
+        <div id="map_canvas" class="col-md-8" style="height: 100vh"></div>
+        <div class="info col-md-4">
+            <strong>Team: {{ team.name }}, code {{ team.code }}</strong> <a href="/edit/{{ team.key() }}"><span
+                class="glyphicon glyphicon-pencil"></span></a> [<a href="/">exit</a>]
+            {% raw %}
+            <div class="well well-small main-info">
+                коорд.: <span class="label label-warning" ng-click="changeDegrees()">{{ use_degrees_text }}</span><br/>
+                <span ng-show="last_data_from_server">
+                    <strong>Данные получены:</strong> {{ last_data_from_server | date:'HH:mm:ss'}}
+                <br/></span>
+                <span ng-show="center_point">
+                    <strong>центр:</strong> <span class="label label-default">{{ center_point.name }}</span> lat (Ш) {{ center_point.lat | gps_coord:use_degrees }} lon (Д) {{ center_point.lon | gps_coord:use_degrees }}
+                <br/></span>
+                <span ng-show="mouse_pos">
+                    <strong>мышь:</strong> lat (Ш) {{ mouse_pos[0] | gps_coord:use_degrees }} lon (Д) {{ mouse_pos[1] | gps_coord:use_degrees }}<br/>
+                    <span ng-show="center_point"><strong>от центра:</strong> {{ center_point | distance:mouse_pos[0]:mouse_pos[1] }}</span>
+                <br/></span>
+            </div>
+            <div class="alert alert-danger alert-dismissable" ng-show="error">
+                <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+                {{ error }}
+            </div>
+            <ul class="nav nav-tabs">
+                <li class="active"><a href="#units" data-toggle="tab">Группы <span class="badge badge-primary">{{ units.length }}</span></a>
+                </li>
+                <li><a href="#points" data-toggle="tab">Точки <span
+                        class="badge badge-primary">{{ points.length }}</span></a></li>
+                <li><a href="#info" data-toggle="tab">Инфо</a></li>
+            </ul>
+            <div class="tab-content">
+                <div class="tab-pane active" id="units">
+                    <strong>Группы</strong>
+                    <table class="table table-condensed table-striped">
+                        <thead>
+                        <tr>
+                            <th>Имя</th>
+                            <th>Обн.</th>
+                            <th>lat (Ш)</th>
+                            <th>lon (Д)</th>
+                            <th ng-show="center_point">От центра</th>
+                        </tr>
+                        </thead>
+                        <tr ng-repeat="p in units">
+                            <td ng-click="setCenterPoint(p)">{{ p.name }}</td>
+                            <td>{{ p.updated * 1000 | date:'HH:mm' }}</td>
+                            <td>{{ p.lat | gps_coord:use_degrees }}</td>
+                            <td>{{ p.lon | gps_coord:use_degrees }}</td>
+                            <td ng-show="center_point">{{ center_point | distance:p.lat:p.lon }}</td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="tab-pane" id="points">
+                    <strong>Точки</strong>
+                    <table class="table table-condensed table-striped">
+                        <thead>
+                        <tr>
+                            <th>Имя</th>
+                            <th>Широта</th>
+                            <th>Долгота</th>
+                            <th ng-show="center_point">От центра</th>
+                            <th></th>
+                        </tr>
+                        </thead>
+                        <tr ng-repeat="p in points" ng-class="{active: center_point && center_point==p}">
+                            <td ng-click="setCenterPoint(p)">{{ p.name }}</td>
+                            <td>{{ p.lat | gps_coord:use_degrees}}</td>
+                            <td>{{ p.lon | gps_coord:use_degrees }}</td>
+                            <td ng-show="center_point">{{ center_point | distance:p.lat:p.lon }}</td>
+                            <td><a href="#" ng-click="deletePoint(p)">&times;</a></td>
+                        </tr>
+                    </table>
+
+                </div>
+                <div class="tab-pane" id="info">
+
+                </div>
+            </div>
+            {% endraw %}
+        </div>
+    </div>
+
+
+    <div id="add_point_dialog" class="modal fade">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title">Добавить точку</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="name">Имя точки</label>
+                        <input type="text" class="form-control" id="name" ng-model="newpoint.name" placeholder="имя"
+                               autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label for="lat">Широта (lat)</label>
+                        <input type="text" class="form-control" id="lat" ng-model="newpoint.lat" placeholder="dd.ddddd"
+                               autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label for="lon">долгота (lon)</label>
+                        <input type="text" class="form-control" id="lon" ng-model="newpoint.lon" placeholder="dd.ddddd"
+                               autocomplete="off">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Закрыть</button>
+                    <button type="button" class="btn btn-primary" ng-click="addPointFromModal()">Сохранить</button>
+                </div>
+            </div>
+            <!-- /.modal-content -->
+        </div>
+        <!-- /.modal-dialog -->
+    </div>
+    <!-- /.modal -->
+
+</div>
+</body>
+<script>
+    var center_point = [{{ center_point.0 }}, {{ center_point.1 }}];
+    var url = "/team/ajax/{{ team_id }}";
+</script>
+</html>

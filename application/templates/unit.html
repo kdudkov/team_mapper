@@ -1,0 +1,43 @@
+{% extends "_base.html" %}
+
+{% block js %}
+<script type="text/javascript" xmlns="http://www.w3.org/1999/html"
+        src="http://maps.googleapis.com/maps/api/js?sensor=false&libraries=geometry"></script>
+
+<script src="/static/js/code.js"></script>
+
+<script type="text/javascript">
+var json_url = '';
+
+$(document).ready(function() {
+    initialize({{ clat }}, {{ clon }});
+    draw_path();
+});
+
+function draw_path() {
+    poly = new google.maps.Polyline({'clicable': false, 'editable':false, 'strokeColor': 'red'});
+    poly.setMap(map);
+    var path = poly.getPath();
+    {% for p in pos %}
+        path.push(new google.maps.LatLng({{ p.geo.lat }}, {{ p.geo.lon }}));
+    {% endfor %}
+}
+</script>
+{% endblock %}
+
+{% block content %}
+    <div class="span8" id="map_canvas"></div>
+    <div class="span4">
+        <div id="right_1">
+{#        <a href="{% url team id %}">back to map</a>#}
+        <h1>Unit: {{ unit.name }}</h1>
+        {% if error %}
+        <div class="error">{{ error }}</div>
+        {% endif %}
+        {% if pos %}
+            <p>{{ pos|length }} positions</p>
+        {% endif %}
+        </div>
+    </div>
+
+{% endblock %}

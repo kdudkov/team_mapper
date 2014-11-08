@@ -1,0 +1,39 @@
+{% extends "_base.html" %}
+
+{% block content %}
+    <div class="row">
+        <div class="col-lg-6 col-lg-offset-3">
+            <h1>Team mapper</h1>
+
+            <div class="well well-large">
+                <h2>Выберите одну из команд</h2>
+                {% if teams %}
+                    <ul class="nav nav-pills nav-stacked">
+                        {% for team in teams %}
+                            <li><a href="/team/{{ team.key() }}">{{ team.name }} ({{ team.owner }})</a></li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+
+                <h2>Или создайте новую</h2>
+
+                <form class="form" method="POST" action="" autocomplete="off">
+                    <div class="form-group">
+                        <label for="f1">Название команды</label>
+                        <input type="text" class="form-control" id="f1" name="name" placeholder="Название"
+                               required="true">
+                    </div>
+                    <div class="form-group">
+                        <label for="f2">E-mail-ы приглашенных (через пробел)</label>
+                        <input type="text" class="form-control" id="f2" name="users">
+                    </div>
+                    <button class="btn btn-primary"> создать</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <hr/>
+
+{% endblock %}
+
+
