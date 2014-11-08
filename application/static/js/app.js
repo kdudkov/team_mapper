@@ -27,9 +27,9 @@ app.controller('MainCtrl',
                 .error(function (data, status) {
                     $log.error('error getting data, status ' + status);
                     $scope.error = 'error getting data';
+                    $scope.loading = false;
                     $scope.$digest();
                     $timeout($scope.getData, 10000);
-                    $scope.loading = false;
                 });
         }
 

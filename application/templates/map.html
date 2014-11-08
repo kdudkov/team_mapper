@@ -39,7 +39,7 @@
             <strong>Team: {{ team.name }}, code {{ team.code }}</strong>
             <a href="/edit/{{ team.key() }}"><span class="glyphicon glyphicon-pencil"></span></a> [<a href="/">exit</a>]
             {% raw %}
-            <button class="btn btn-default btn-xsmall" ng-hide="loading" ng-click="getData()">reload
+            <button class="btn btn-default btn-xs" ng-class="{disabled:loading}" ng-click="getData()">reload
             </button>
             <div class="well well-small main-info">
                 коорд.: <span class="label label-warning" ng-click="changeDegrees()">{{ use_degrees_text }}</span><br/>
